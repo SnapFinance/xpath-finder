@@ -1,8 +1,8 @@
 const browserAppData = this.browser || this.chrome;
 const tabs = {};
 const inspectFile = 'inspect.js';
-const activeIcon = 'active-64.png';
-const defaultIcon = 'default-64.png';
+const activeIcon = 'snap_active.png';
+const defaultIcon = 'snap_inactive.png';
 
 const inspect = {
   toggleActivate: (id, type, icon) => {
