@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "name": "xPath Finder (snap)",
+  "name": "xPath Finder N&I",
   "description": "Click on any element to get the xPath",
   "homepage_url": "https://github.com/SnapFinance/xpath-finder",
   "version": "1.0.1",
