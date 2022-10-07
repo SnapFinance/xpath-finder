@@ -20,20 +20,20 @@ var xPathFinder = xPathFinder || (() => {
       e.stopPropagation && e.stopPropagation();
 
       if (e.target.id !== this.contentNode) {
-        this.XPath = this.getXPath(e.target);
-        const contentNode   = document.getElementById(this.contentNode);
-        const iframeNode    = window.frameElement || iframe;
-        const contentString = iframeNode ? `Iframe: ${this.getXPath(iframeNode)}<br/>XPath: ${this.XPath}` : this.XPath;
+        this.XPath = this.getXPathString(e.target);
+        const contentNode = document.getElementById(this.contentNode);
+        const iframeNode = window.frameElement || iframe;
+        const contentString = iframeNode ? `Iframe: ${this.getXPathString(iframeNode)}<br/>XPath: ${this.XPath}` : this.XPath;
 
         if (contentNode) {
           contentNode.innerHTML = contentString;
         } else {
           const contentHtml = document.createElement('div');
-          contentHtml.innerHTML = contentString;
+          contentHtml.innerHTML = "Copied to clipboard: " + contentString;
           contentHtml.id = this.contentNode;
           document.body.appendChild(contentHtml);
         }
-        this.options.clipboard && ( this.copyText(this.XPath) );
+        this.options.clipboard && (this.copyText(this.XPath));
       }
     }
 
@@ -146,12 +146,12 @@ var xPathFinder = xPathFinder || (() => {
       }
       // add listeners for all frames and root
       document.addEventListener('click', this.getData, true);
-      this.options.inspector && ( document.addEventListener('mouseover', this.draw) );
+      this.options.inspector && (document.addEventListener('mouseover', this.draw));
       const frameLength = window.parent.frames.length
-      for (let i = 0 ; i < frameLength; i++) {
+      for (let i = 0; i < frameLength; i++) {
         let frame = window.parent.frames[i];
         frame.document.addEventListener('click', e => this.getData(e, frame.frameElement), true);
-        this.options.inspector && (frame.document.addEventListener('mouseover', this.draw) );
+        this.options.inspector && (frame.document.addEventListener('mouseover', this.draw));
       }
 
     }
@@ -167,47 +167,53 @@ var xPathFinder = xPathFinder || (() => {
       contentNode && contentNode.remove();
       // remove listeners for all frames and root
       document.removeEventListener('click', this.getData, true);
-      this.options && this.options.inspector && ( document.removeEventListener('mouseover', this.draw) );
+      this.options && this.options.inspector && (document.removeEventListener('mouseover', this.draw));
       const frameLength = window.parent.frames.length
-      for (let i = 0 ; i < frameLength; i++) {
+      for (let i = 0; i < frameLength; i++) {
         let frameDocument = window.parent.frames[i].document
         frameDocument.removeEventListener('click', this.getData, true);
-        this.options && this.options.inspector && ( frameDocument.removeEventListener('mouseover', this.draw) );
+        this.options && this.options.inspector && (frameDocument.removeEventListener('mouseover', this.draw));
       }
-      
+
     }
 
-    getXPath(el) {
-      let nodeElem = el;
-      if (nodeElem.id && this.options.shortid) {
-        return `//*[@id="${nodeElem.id}"]`;
-      }
-      const parts = [];
-      while (nodeElem && nodeElem.nodeType === Node.ELEMENT_NODE) {
-        let nbOfPreviousSiblings = 0;
-        let hasNextSiblings = false;
-        let sibling = nodeElem.previousSibling;
-        while (sibling) {
-          if (sibling.nodeType !== Node.DOCUMENT_TYPE_NODE && sibling.nodeName === nodeElem.nodeName) {
-            nbOfPreviousSiblings++;
-          }
-          sibling = sibling.previousSibling;
+    getPathTo(element, path) {
+      try {
+        if (element === document.body) {
+          return path
         }
-        sibling = nodeElem.nextSibling;
-        while (sibling) {
-          if (sibling.nodeName === nodeElem.nodeName) {
-            hasNextSiblings = true;
-            break;
+        let ix = 0;
+        let siblings = element.parentNode.childNodes;
+        for (let i = 0; i < siblings.length; i++) {
+          let sibling = siblings[i];
+
+          if (sibling === element) {
+            path.push({ "tag": element.tagName.toLowerCase(), "int": ix + 1, "id": element.id })
+            return this.getPathTo(element.parentNode, path)
           }
-          sibling = sibling.nextSibling;
+
+          if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {
+            ix++;
+          }
         }
-        const prefix = nodeElem.prefix ? nodeElem.prefix + ':' : '';
-        const nth = nbOfPreviousSiblings || hasNextSiblings ? `[${nbOfPreviousSiblings + 1}]` : '';
-        parts.push(prefix + nodeElem.localName + nth);
-        nodeElem = nodeElem.parentNode;
+      } catch (TypeError) {
       }
-      return parts.length ? '/' + parts.reverse().join('/') : '';
+      finally {
+      }
+
     }
+
+    getXPathString(element) {
+      let xpath = this.getPathTo(element, [])
+      let xpath_str = 'html/body'
+      if (xpath !== undefined) {
+        xpath.reverse().forEach((element) => {
+          xpath_str = xpath_str + "/" + element.tag + "[" + element.int + "]"
+        })
+      }
+      return xpath_str;
+    }
+
 
     getElementDimensions(domElement) {
       const calculatedStyle = window.getComputedStyle(domElement);
