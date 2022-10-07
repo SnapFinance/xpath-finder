@@ -26,7 +26,7 @@ var xPathFinder = xPathFinder || (() => {
         const contentString = iframeNode ? `Iframe: ${this.getXPathString(iframeNode)}<br/>XPath: ${this.XPath}` : this.XPath;
 
         if (contentNode) {
-          contentNode.innerHTML = contentString;
+          contentNode.innerHTML = "Copied to clipboard: " + contentString;
         } else {
           const contentHtml = document.createElement('div');
           contentHtml.innerHTML = "Copied to clipboard: " + contentString;
